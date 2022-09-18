@@ -1,0 +1,2 @@
+odoorpc
+psycopg2
