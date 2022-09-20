@@ -315,6 +315,39 @@ def insert_part_5():
     print('*** Migration 5 Success ***')
 
 
+def insert_part_6():
+    cr.execute("""
+        SELECT 
+            doc.emp_id,
+            json_agg(json_build_object('name', doc.file_name, 'file', att.store_fname))
+        FROM 
+            employee_document doc INNER JOIN ir_attachment att ON att.res_id = doc.id
+        WHERE
+            att.res_model = 'employee.document'
+        AND
+            att.res_field = 'name'
+        GROUP BY
+            doc.emp_id
+    """)
+    counter = 0
+    for rec in cr.fetchall():
+        emp = odoo.execute_kw(O_DB, O_UID, O_PWD, 'hr.employee', 'search_read', [[['old_id', '=', rec[0]], *archieved_condition]])
+        if emp:
+            emp = emp[0]
+            for doc in rec[1]:
+                byte_data = None
+                try:
+                    file = open(f"filestore/{doc.get('file')}", "rb")
+                    byte_data = base64.b64encode(file.read()).decode('utf-8')
+                    odoo.execute_kw(O_DB, O_UID, O_PWD, 'employee.document', 'create', [{'employee_id': emp.get('id'), 'name': doc.get('name'), 'document': byte_data}])
+                except Exception as e:
+                    print(f"ERROR reading attachment for employee {emp.get('id')}", doc.get('name'))
+                print(f'{counter}')
+                counter+=1
+    
+    print('*** Migration 6 Success ***')
+
+
 # Run each one separately (All others should be commented each time)
 
 # insert_part_1()
@@ -322,4 +355,5 @@ def insert_part_5():
 # insert_part_3()
 # insert_part_4()
 # insert_part_5()
+# insert_part_6()
 
