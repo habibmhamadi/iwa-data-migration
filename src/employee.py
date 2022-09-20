@@ -1,4 +1,6 @@
+from os import getcwd
 from config.db import init_connection
+import base64
 
 
 db, cr, odoo, O_DB, O_UID, O_PWD = init_connection()
@@ -169,7 +171,8 @@ def insert_part_1():
 
 
 def insert_part_2():
-    for emp in get_employees():
+    emps = get_employees()
+    for emp in emps:
         if emp.get('department_id'):
             department_id = odoo.execute_kw(O_DB, O_UID, O_PWD, 'hr.department', 'search', [[['old_id', '=', emp.get('department_id')], *archieved_condition]])
             if department_id:
@@ -181,14 +184,13 @@ def insert_part_2():
         if emp.get('address_id'):
             if not odoo.execute_kw(O_DB, O_UID, O_PWD, 'res.partner', 'search', [[['id', '=', emp.get('address_id')], *archieved_condition]]):
                 emp.update({'address_id': None})
-        odoo.execute_kw(O_DB, O_UID, O_PWD, 'hr.employee', 'create', [emp])
+    odoo.execute_kw(O_DB, O_UID, O_PWD, 'hr.employee', 'create', [emps])
     print('*** Migration 2 Success ***')
     
 
 def insert_part_3():
-   
     deps = odoo.execute_kw(O_DB, O_UID, O_PWD, 'hr.department', 'search_read', [[['old_id', 'in', [dep.get('old_id') for dep in get_departments()]], *archieved_condition]])
-    for dep in deps:
+    for index, dep in enumerate(deps):
         cr.execute("SELECT manager_id, parent_id FROM hr_department WHERE id = %s", (dep.get('old_id'),))
         dep_data = cr.fetchone()
         new_manager_id = False
@@ -202,10 +204,11 @@ def insert_part_3():
             if new_parent_id:
                 new_parent_id = new_parent_id[0]
         odoo.execute_kw(O_DB, O_UID, O_PWD, 'hr.department', 'write', [[dep.get('id')], {'manager_id': new_manager_id, 'parent_id': new_parent_id}])
+        print(f'{index+1}/{len(deps)}')
         
 
     emps = odoo.execute_kw(O_DB, O_UID, O_PWD, 'hr.employee', 'search_read', [[['old_id', 'in', [emp.get('old_id') for emp in get_employees()]], *archieved_condition]])
-    for emp in emps:
+    for index, emp in enumerate(emps):
         cr.execute("SELECT coach_id, parent_id FROM hr_employee WHERE id = %s", (emp.get('old_id'),))
         emp_data = cr.fetchone()
         new_coach_id = False
@@ -219,6 +222,7 @@ def insert_part_3():
             if new_parent_id:
                 new_parent_id = new_parent_id[0]
         odoo.execute_kw(O_DB, O_UID, O_PWD, 'hr.employee', 'write', [[emp.get('id')], {'coach_id': new_coach_id, 'parent_id': new_parent_id}])
+        print(f'{index+1}/{len(emps)}')
     print('*** Migration 3 Success ***')
     
 
@@ -293,6 +297,23 @@ def insert_part_4():
     print('*** Migration 4 Success ***')
     
 
+def insert_part_5():
+    emp_ids = odoo.execute_kw(O_DB, O_UID, O_PWD, 'hr.employee', 'search_read', [[*archieved_condition]])
+    for index, emp in enumerate(emp_ids):
+        cr.execute("SELECT store_fname FROM ir_attachment WHERE res_model = 'hr.employee' AND res_id = %s AND res_field = 'image_1920' LIMIT 1", (emp.get('old_id'),))
+        f_name = cr.fetchone()
+        byte_data = None
+        if f_name:
+            try:
+                file = open(f'filestore/{f_name[0]}', "rb")
+                byte_data = base64.b64encode(file.read()).decode('utf-8')
+            except Exception as e:
+                print(f"ERROR reading attachment for employee {emp.get('id')}", e)
+        if byte_data:
+            odoo.execute_kw(O_DB, O_UID, O_PWD, 'hr.employee', 'write', [[emp.get('id')], {'image_1920': byte_data}])
+        print(f'{index+1}/{len(emp_ids)}')
+    print('*** Migration 5 Success ***')
+
 
 # Run each one separately (All others should be commented each time)
 
@@ -300,4 +321,5 @@ def insert_part_4():
 # insert_part_2()
 # insert_part_3()
 # insert_part_4()
+# insert_part_5()
 
