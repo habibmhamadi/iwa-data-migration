@@ -59,7 +59,8 @@ def get_employees():
             grand_father_name,
             current_address,
             permanent_address,
-            hr_bank_account
+            hr_bank_account,
+            account_analytic_tag_id
         FROM
             hr_employee
         WHERE
@@ -96,10 +97,80 @@ def get_employees():
         'grand_father_name': emp[27],
         'current_address': emp[28],
         'permanent_address': emp[29],
-        'hr_bank_account': emp[30]
+        'hr_bank_account': emp[30],
+        'account_analytic_tag_id': emp[31]
     } for emp in cr.fetchall()]
 
 
+def insert_part_0():
+    # Analytic Group
+    cr.execute("""
+        SELECT
+            id,
+            parent_path,
+            name,
+            complete_name,
+            company_id
+        FROM
+            account_analytic_group
+            """)
+            
+    groups = [{
+            'old_id': gp[0],
+            'parent_path': gp[1],
+            'name': gp[2],
+            'complete_name': gp[3],
+            'company_id': gp[4],
+        } for gp in cr.fetchall()]
+
+    odoo.execute_kw(O_DB, O_UID, O_PWD, 'account.analytic.group', 'create', [groups])
+
+
+    # Analytic Account
+    cr.execute("""
+        SELECT
+            id,
+            name,
+            code,
+            active,
+            company_id
+        FROM
+            account_analytic_account
+            """)
+
+    accounts = [{
+            'old_id': ac[0],
+            'name': ac[1],
+            'code': ac[2],
+            'active': ac[3],
+            'company_id': ac[4],
+        } for ac in cr.fetchall()]
+
+    odoo.execute_kw(O_DB, O_UID, O_PWD, 'account.analytic.account', 'create', [accounts])
+
+
+    # Analytic Tag
+    cr.execute("""
+        SELECT
+            name,
+            color,
+            active,
+            active_analytic_distribution,
+            company_id
+        FROM
+            account_analytic_tag
+            """)
+
+    tags = [{
+            'name': tag[0],
+            'color': tag[1],
+            'active': tag[2],
+            'active_analytic_distribution': tag[3],
+            'company_id': tag[4],
+        } for tag in cr.fetchall()]
+
+    odoo.execute_kw(O_DB, O_UID, O_PWD, 'account.analytic.tag', 'create', [tags])
+    print('*** Migration 0 Success ***')
 
 
 def insert_part_1():
@@ -185,6 +256,10 @@ def insert_part_2():
         if emp.get('address_id'):
             if not odoo.execute_kw(O_DB, O_UID, O_PWD, 'res.partner', 'search', [[['id', '=', emp.get('address_id')], *archieved_condition]]):
                 emp.update({'address_id': None})
+        if emp.get('account_analytic_tag_id'):
+            tag_id = odoo.execute_kw(O_DB, O_UID, O_PWD, 'account.analytic.tag', 'search', [[['old_id', '=', emp.get('account_analytic_tag_id')], *archieved_condition]])
+            if tag_id:
+                emp.update({'account_analytic_tag_id': tag_id[0]})
     odoo.execute_kw(O_DB, O_UID, O_PWD, 'hr.employee', 'create', [emps])
     print('*** Migration 2 Success ***')
     
@@ -294,7 +369,6 @@ def insert_part_4():
                 refs = list(map(lambda x: {**x, **{'employee_id': emp_id[0]}} , emp.get('references')))
                 odoo.execute_kw(O_DB, O_UID, O_PWD, 'employee.reference', 'create', [refs])
 
-
     print('*** Migration 4 Success ***')
     
 
@@ -351,6 +425,7 @@ def insert_part_6():
 
 # Run each one separately (All others should be commented each time)
 
+# insert_part_0()
 # insert_part_1()
 # insert_part_2()
 # insert_part_3()
