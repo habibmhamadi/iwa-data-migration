@@ -8,3 +8,9 @@
 - Install packages `pip3 install -r requirements.txt`
 - The `filestore` folder should be copied in the root directory.
 - run files inside `src` individually.
+
+### File Order
+```
+    employee.py
+    contract.py
+```

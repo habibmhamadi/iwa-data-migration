@@ -1,9 +1,10 @@
-from os import getcwd
 from config.db import init_connection
 import base64
 
 
 db, cr, odoo, O_DB, O_UID, O_PWD = init_connection()
+
+archieved_condition = ['|', ['active', '=', True], ['active', '=', False]]
 
 
 # HR Department
@@ -99,7 +100,7 @@ def get_employees():
     } for emp in cr.fetchall()]
 
 
-archieved_condition = ['|', ['active', '=', True], ['active', '=', False]]
+
 
 def insert_part_1():
 
