@@ -135,7 +135,112 @@ def insert_2():
             print(f'{index+1}/{len(tors)}')
 
 
+def insert_3():
+    cr.execute("""
+        SELECT
+            id,
+            name,
+            active,
+            is_company,
+            company_id
+        FROM
+            res_partner
+        WHERE
+            id IN (SELECT DISTINCT(service_provider_id) FROM hr_service_contract)
+        ORDER BY
+            id
+    """)
+
+    partners = [{
+        'old_id': partner[0],
+        'name': partner[1],
+        'active': partner[2],
+        'is_company': partner[3],
+        'company_id': partner[4]
+
+    } for partner in cr.fetchall()]
+
+    odoo.execute_kw(O_DB, O_UID, O_PWD, 'res.partner', 'create', [partners])
+
+
+
+
+def insert_4():
+    cr.execute("""
+        SELECT
+            service.id,
+            service.name,
+            service.department_id,
+            service.date_start::TEXT,
+            service.date_end::TEXT,
+            service.salary_currency,
+            tm.name as service_name,
+            CASE 
+                WHEN service.salary_currency = 'USD' 
+                    THEN service.wage 
+                ELSE 
+                    service.wage_afn
+            END AS wage,
+            service.company_id,
+            service.state,
+            service.tor_text,
+            service.service_provider_id
+        FROM
+            hr_service_contract service LEFT JOIN res_partner partner ON partner.id = service.service_provider_id
+            LEFT JOIN service_template tm ON tm.id = service.service_id
+        GROUP BY
+            service.id,
+            service.name,
+            tm.name
+        ORDER BY 
+            service.id
+    """)
+
+    db_service_contracts = [{
+        'old_id': serv[0],
+        'agreement_reference': serv[1],
+        'department_id': serv[2],
+        'start_date': serv[3],
+        'end_date': serv[4],
+        'currency_id': serv[5],
+        'name': serv[6] or 'Untitled',
+        'amount': serv[7],
+        'company_id': serv[8],
+        'state': serv[9],
+        'terms_of_reference': serv[10],
+        'service_provider_id': serv[11]
+    } for serv in cr.fetchall()]
+
+    currency_ids = odoo.execute_kw(O_DB, O_UID, O_PWD, 'res.currency', 'search_read', [[['name', 'in', ['USD', 'AFN']], *archieved_condition]])
+
+    currencies = {f"{currency_ids[0].get('name')}": currency_ids[0].get('id'), f"{currency_ids[1].get('name')}": currency_ids[1].get('id')}
+
+    states = {
+        'draft': '1_draft',
+        'manager_approval': '2_under_review',
+        'controller_approval': '3_finance_review',
+        'ceo_approval': '4_director_approval',
+        'open': '5_running',
+        'close': '9_expired',
+        'cancel': '7_cancelled',
+        'rejected': '8_rejected'
+    }
+
+    for index, serv in enumerate(db_service_contracts):
+        if serv.get('department_id'):
+            dep_id = odoo.execute_kw(O_DB, O_UID, O_PWD, 'hr.department', 'search', [[['old_id', '=', serv.get('department_id')], *archieved_condition]])
+            serv.update({'department_id': dep_id and dep_id[0] or False})
+        if serv.get('service_provider_id'):
+            service_provider_id = odoo.execute_kw(O_DB, O_UID, O_PWD, 'res.partner', 'search', [[['old_id', '=', serv.get('partner_id')], *archieved_condition]])    
+            serv.update({'service_provider_id': service_provider_id and service_provider_id[0] or False})
+        serv.update({'state': states.get(serv.get('state')), 'currency_id': currencies.get(serv.get('currency_id', '0'), False)})
+
+        odoo.execute_kw(O_DB, O_UID, O_PWD, 'service.contract', 'create', [serv])
+        print(f'{index+1}/{len(db_service_contracts)}')
+
 
 
 # insert_1()
 # insert_2()
+# insert_3()
+# insert_4()
