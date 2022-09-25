@@ -156,7 +156,8 @@ def insert_part_0():
             color,
             active,
             active_analytic_distribution,
-            company_id
+            company_id,
+            id
         FROM
             account_analytic_tag
             """)
@@ -167,6 +168,7 @@ def insert_part_0():
             'active': tag[2],
             'active_analytic_distribution': tag[3],
             'company_id': tag[4],
+            'old_id': tag[5]
         } for tag in cr.fetchall()]
 
     odoo.execute_kw(O_DB, O_UID, O_PWD, 'account.analytic.tag', 'create', [tags])
@@ -234,8 +236,10 @@ def insert_part_1():
             hr_job""")
 
     jobs = [{'old_id': job[0], 'name':job[1]} for job in cr.fetchall()]
-
-    odoo.execute_kw(O_DB, O_UID, O_PWD, 'res.company', 'write', [[1], company])
+    try:
+        odoo.execute_kw(O_DB, O_UID, O_PWD, 'res.company', 'write', [[1], company])
+    except Exception as e:
+        pass
     odoo.execute_kw(O_DB, O_UID, O_PWD, 'res.partner', 'write', [[1], company_partner])
     odoo.execute_kw(O_DB, O_UID, O_PWD, 'hr.job', 'create', [jobs])
     odoo.execute_kw(O_DB, O_UID, O_PWD, 'hr.department', 'create', [get_departments()])

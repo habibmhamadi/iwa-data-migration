@@ -1,4 +1,5 @@
 from config.db import init_connection
+import base64
 
 
 db, cr, odoo, O_DB, O_UID, O_PWD = init_connection()
@@ -161,7 +162,7 @@ def insert_3():
     } for partner in cr.fetchall()]
 
     odoo.execute_kw(O_DB, O_UID, O_PWD, 'res.partner', 'create', [partners])
-
+    print('*** Migration 3 Success ***')
 
 
 
@@ -239,8 +240,40 @@ def insert_4():
         print(f'{index+1}/{len(db_service_contracts)}')
 
 
+def insert_5():
+    cr.execute("""
+        SELECT
+            res_id,
+            json_agg(json_build_object('name', name, 'path', store_fname))
+        FROM
+            ir_attachment
+        WHERE
+            res_model = 'hr.service_contract'
+        GROUP BY
+            res_id
+        ORDER BY
+            res_id
+    """)
+    db_attachments = cr.fetchall()
+    for index, rec in enumerate(db_attachments):
+        service_id = odoo.execute_kw(O_DB, O_UID, O_PWD, 'service.contract', 'search', [[['old_id', '=', rec[0]], *archieved_condition]])
+        for att in rec[1]:
+            try:
+                file = open(f"filestore/{att.get('path')}", "rb")
+                odoo.execute_kw(O_DB, O_UID, O_PWD, 'ir.attachment', 'create', [{
+                    'res_id': service_id[0],
+                    'res_model': 'service.contract',
+                    'name': att.get('name'),
+                    'datas': base64.encodebytes(file.read()).decode('utf-8'),
+                }])
+            except Exception as e:
+                print('Error writing attachment', e)
+        print(f'{index+1}/{len(db_attachments)}')
+
+# Run each one separately (All others should be commented each time)
 
 # insert_1()
 # insert_2()
 # insert_3()
-# insert_4()
+insert_4()
+# insert_5()
