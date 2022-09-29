@@ -97,7 +97,7 @@ def get_employees():
         'grand_father_name': emp[27],
         'current_address': emp[28],
         'permanent_address': emp[29],
-        'hr_bank_account': emp[30],
+        'bank_account': emp[30],
         'account_analytic_tag_id': emp[31]
     } for emp in cr.fetchall()]
 

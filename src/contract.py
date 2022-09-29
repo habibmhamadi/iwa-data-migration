@@ -6,6 +6,40 @@ db, cr, odoo, O_DB, O_UID, O_PWD = init_connection()
 
 archieved_condition = ['|', ['active', '=', True], ['active', '=', False]]
 
+def get_salary_grade_steps():
+    cr.execute("""
+        SELECT 
+            grade,
+            array_agg(distinct(step)),
+        FROM 
+            hr_contract 
+        GROUP BY 
+            grade 
+        ORDER BY 
+            grade;
+    """)
+
+    return cr.fetchall()
+
+def insert():
+    grade_steps = get_salary_grade_steps()
+    grade_steps = [{
+        'old_id': gs[0],
+        'name': gs[0],
+        'contract': 'fixed'
+    } for gs in grade_steps]
+    odoo.execute_kw(O_DB, O_UID, O_PWD, 'salary.grade', 'create', [grade_steps])
+    print('*** Migration Success ***')
+
+def insert_0():
+    grade_steps = get_salary_grade_steps()
+    steps = []
+    for rec in grade_steps:
+        new_grade_id = odoo.execute_kw(O_DB, O_UID, O_PWD, 'salary.grade', 'search', [[['old_id', '=', int(rec[0])]]])
+        steps += [{'old_id': st,'name': st, 'grade_id': new_grade_id[0]} for st in rec[1]]
+    odoo.execute_kw(O_DB, O_UID, O_PWD, 'salary.step', 'create', [steps])
+    print('*** Migration 0 Success***')
+
 
 def insert_1():
 
@@ -70,16 +104,16 @@ def insert_1():
         'sick_leave': con[15],
         'personal_leave': con[16],
         'transportation': con[17],
+        'transportation_afn': con[23],
         'house_allowance': con[18],
         'food_allowance': con[19],
         'house_allowance_figure': con[20],
         'site_lunch_allowance': con[21],
-        'wage_afn': con[22],
-        'transportation_afn': con[23],
-        'grade': con[24],
-        'step': con[25],
+        'salary_grade': con[24] and int(con[24]) or False,
+        'salary_step': con[25] and int(con[25]) or False,
         'duty_station': con[26],
-        'wage': con[27],
+        'wage_afn': con[22] ,
+        'wage': con[27] ,
         'state': con[28],
         'contract_signatory': con[29],
         'structure_type_id': con[30],
@@ -109,6 +143,24 @@ def insert_1():
                 if account_id:
                     con.update({'analytic_account_id': account_id[0]})
             
+            if con.get('salary_grade'):
+                salary_grade_id = odoo.execute_kw(O_DB, O_UID, O_PWD, 'salary.grade', 'search', [[['old_id', '=', con.get('salary_grade')]]])
+                salary_grade_id = salary_grade_id and salary_grade_id[0] or False
+                con.update({'salary_grade': salary_grade_id})
+            
+            if con.get('salary_step'):
+                salary_step_id = odoo.execute_kw(O_DB, O_UID, O_PWD, 'salary.step', 'search', [[['grade_id', '=', con.get('salary_grade')], ['old_id', '=', con.get('salary_step')]]])
+                salary_step_id = salary_step_id and salary_step_id[0] or False
+                con.update({'salary_step': salary_step_id})
+
+            if con.get('transportation_afn') and int(con.get('transportation_afn')) > 0:
+                con.update({'transportation': con.get('transportation_afn')})
+            del con['transportation_afn']
+
+            if con.get('wage_afn') and int(con.get('wage_afn')) > 0:
+                con.update({'wage': con.get('wage_afn')})
+            del con['wage_afn']
+
             odoo.execute_kw(O_DB, O_UID, O_PWD, 'hr.contract', 'create', [con])
             print(f'{index+1}/{len(db_contracts)}')
 
@@ -272,8 +324,10 @@ def insert_5():
 
 # Run each one separately (All others should be commented each time)
 
+# insert()
+# insert_0()
 # insert_1()
 # insert_2()
 # insert_3()
-insert_4()
+# insert_4()
 # insert_5()
