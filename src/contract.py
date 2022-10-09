@@ -10,7 +10,7 @@ def get_salary_grade_steps():
     cr.execute("""
         SELECT 
             grade,
-            array_agg(distinct(step)),
+            array_agg(distinct(step))
         FROM 
             hr_contract 
         GROUP BY 
