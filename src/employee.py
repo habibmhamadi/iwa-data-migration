@@ -103,52 +103,6 @@ def get_employees():
 
 
 def insert_part_0():
-    # Analytic Group
-    cr.execute("""
-        SELECT
-            id,
-            parent_path,
-            name,
-            complete_name,
-            company_id
-        FROM
-            account_analytic_group
-            """)
-            
-    groups = [{
-            'old_id': gp[0],
-            'parent_path': gp[1],
-            'name': gp[2],
-            'complete_name': gp[3],
-            'company_id': gp[4],
-        } for gp in cr.fetchall()]
-
-    odoo.execute_kw(O_DB, O_UID, O_PWD, 'account.analytic.group', 'create', [groups])
-
-
-    # Analytic Account
-    cr.execute("""
-        SELECT
-            id,
-            name,
-            code,
-            active,
-            company_id
-        FROM
-            account_analytic_account
-            """)
-
-    accounts = [{
-            'old_id': ac[0],
-            'name': ac[1],
-            'code': ac[2],
-            'active': ac[3],
-            'company_id': ac[4],
-        } for ac in cr.fetchall()]
-
-    odoo.execute_kw(O_DB, O_UID, O_PWD, 'account.analytic.account', 'create', [accounts])
-
-
     # Analytic Tag
     cr.execute("""
         SELECT

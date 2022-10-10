@@ -77,8 +77,7 @@ def insert_1():
             contract_signatory,
             structure_type_id,
             department_id,
-            job_id,
-            analytic_account_id
+            job_id
         FROM
             hr_contract
         ORDER BY
@@ -119,7 +118,6 @@ def insert_1():
         'structure_type_id': con[30],
         'department_id': con[31],
         'job_id': con[32],
-        'analytic_account_id': con[33],
         'contract_approver': 2,
 
     } for con in cr.fetchall()]
@@ -138,11 +136,6 @@ def insert_1():
             job = odoo.execute_kw(O_DB, O_UID, O_PWD, 'hr.job', 'search', [[['old_id', '=', con.get('job_id')]]])
             con.update({'job_id': job and job[0] or False})
 
-            if con.get('analytic_account_id'):
-                account_id = odoo.execute_kw(O_DB, O_UID, O_PWD, 'account.analytic.account', 'search', [[['old_id', '=', con.get('analytic_account_id')], *archieved_condition]])
-                if account_id:
-                    con.update({'analytic_account_id': account_id[0]})
-            
             if con.get('salary_grade'):
                 salary_grade_id = odoo.execute_kw(O_DB, O_UID, O_PWD, 'salary.grade', 'search', [[['old_id', '=', con.get('salary_grade')]]])
                 salary_grade_id = salary_grade_id and salary_grade_id[0] or False
