@@ -277,7 +277,7 @@ def insert_4():
             dep_id = odoo.execute_kw(O_DB, O_UID, O_PWD, 'hr.department', 'search', [[['old_id', '=', serv.get('department_id')], *archieved_condition]])
             serv.update({'department_id': dep_id and dep_id[0] or False})
         if serv.get('service_provider_id'):
-            service_provider_id = odoo.execute_kw(O_DB, O_UID, O_PWD, 'res.partner', 'search', [[['old_id', '=', serv.get('partner_id')], *archieved_condition]])    
+            service_provider_id = odoo.execute_kw(O_DB, O_UID, O_PWD, 'res.partner', 'search', [[['old_id', '=', serv.get('service_provider_id')], *archieved_condition]])    
             serv.update({'service_provider_id': service_provider_id and service_provider_id[0] or False})
         serv.update({'state': states.get(serv.get('state')), 'currency_id': currencies.get(serv.get('currency_id', '0'), False)})
 
