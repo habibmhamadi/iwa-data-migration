@@ -102,6 +102,42 @@ def get_employees():
     } for emp in cr.fetchall()]
 
 
+
+def create_users():
+    cr.execute("""
+        SELECT
+            usr.id AS id,
+            usr.active AS active,
+            usr.login AS login,
+            usr.password AS password,
+            usr.company_id AS company_id,
+            usr.share AS share,
+            usr.website_id AS website_id,
+            partner.name AS name
+        FROM
+            res_users AS usr
+        INNER JOIN
+            res_partner AS partner ON partner.id = usr.partner_id
+        WHERE 
+            usr.id > 5
+        ORDER BY usr.id
+    """)
+    users = [{
+        'old_id': user[0],
+        'active': user[1],
+        'login': user[2],
+        'password': 'admin',
+        'company_id': user[4],
+        'share': user[5],
+        'website_id': user[6],
+        'name': user[7],
+        'sel_groups_1_9_10': 9 if user[5] else 1 
+    } for user in cr.fetchall()]
+
+    odoo.execute_kw(O_DB, O_UID, O_PWD, 'res.users', 'create', [users])
+    print('********* Users Migrated *******')
+
+
 def insert_part_0():
     # Analytic Tag
     cr.execute("""
@@ -383,6 +419,7 @@ def insert_part_6():
 
 # Run each one separately (All others should be commented each time)
 
+# create_users()
 # insert_part_0()
 # insert_part_1()
 # insert_part_2()
@@ -390,4 +427,3 @@ def insert_part_6():
 # insert_part_4()
 # insert_part_5()
 # insert_part_6()
-

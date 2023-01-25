@@ -188,25 +188,33 @@ def insert_3():
             name,
             active,
             is_company,
-            company_id
+            company_id,
+            supplier_rank,
+            customer_rank
         FROM
             res_partner
         WHERE
-            id IN (SELECT DISTINCT(service_provider_id) FROM hr_service_contract)
+            id IN (SELECT DISTINCT(service_provider_id) FROM hr_service_contract) 
+                OR supplier_rank > 0 OR (id NOT IN (SELECT partner_id FROM res_users) and id != 1)
         ORDER BY
             id
     """)
 
-    partners = [{
-        'old_id': partner[0],
-        'name': partner[1],
-        'active': partner[2],
-        'is_company': partner[3],
-        'company_id': partner[4]
-
-    } for partner in cr.fetchall()]
-
-    odoo.execute_kw(O_DB, O_UID, O_PWD, 'res.partner', 'create', [partners])
+    for index, partner in enumerate(cr.fetchall()):
+        vals = {
+            'old_id': partner[0],
+            'name': partner[1],
+            'active': partner[2],
+            'is_company': partner[3],
+            'company_id': partner[4],
+            'supplier_rank': partner[5],
+            'customer_rank': partner[6]
+    }
+        try:
+            odoo.execute_kw(O_DB, O_UID, O_PWD, 'res.partner', 'create', [vals])
+            print(index+1)
+        except Exception as e:
+            print(f"ERROR: {vals.get('old_id')}: {e}")
     print('*** Migration 3 Success ***')
 
 
