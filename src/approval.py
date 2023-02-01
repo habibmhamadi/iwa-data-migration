@@ -40,9 +40,9 @@ def approval():
             'date': app[5],
             'location': app[6],
             'amount': app[7],
-            'currency_id': app[8],
-            'urgent_level': app[9],
-            'old_sequence': app[10],
+            # 'currency_id': app[8],
+            # 'urgent_level': app[9],
+            # 'old_sequence': app[10],
             'reason': app[11],
             'request_status': app[12],
             'old_total': app[7]
@@ -174,8 +174,8 @@ def purchase_requistion():
             'exclusive': pur[2],
             'quantity_copy': pur[3],
             'line_copy': pur[4],
-            'link_to_service_contract': pur[5],
-            'is_blanket_order': pur[6] 
+            # 'link_to_service_contract': pur[5],
+            # 'is_blanket_order': pur[6] 
         }
         try:
             odoo.execute_kw(O_DB, O_UID, O_PWD, 'purchase.requisition.type', 'create', [vals])
@@ -236,16 +236,16 @@ def purchase_requistion():
             'director_approval_date': pq[16],
             'warehouse_id': pq[17],
             'picking_type_id': pq[18],
-            'approval_id': pq[19],
-            'show_service_contract': pq[20],
-            'source_approval_requests': pq[21]
+            # 'approval_id': pq[19],
+            # 'show_service_contract': pq[20],
+            # 'source_approval_requests': pq[21]
         }
         try:
             vendor_id = odoo.execute_kw(O_DB, O_UID, O_PWD, 'res.partner', 'search', [[['old_id', '=', pq[3]], *archieved_condition]])
             vals.update({'vendor_id': vendor_id and vendor_id[0] or False})
 
-            approval_id = odoo.execute_kw(O_DB, O_UID, O_PWD, 'approval.request', 'search', [[['old_id', '=', pq[19]]]])
-            vals.update({'approval_id': approval_id and approval_id[0] or False})
+            # approval_id = odoo.execute_kw(O_DB, O_UID, O_PWD, 'approval.request', 'search', [[['old_id', '=', pq[19]]]])
+            # vals.update({'approval_id': approval_id and approval_id[0] or False})
 
             odoo.execute_kw(O_DB, O_UID, O_PWD, 'purchase.requisition', 'create', [vals])
             print(index+1)
@@ -392,10 +392,10 @@ def purchase_order():
             'user_id': order[16],
             'currency_rate': float(f'{order[17]}') if order[17] else 0,
             'picking_type_id': order[18],
-            'approval_id': order[19],
+            # 'approval_id': order[19],
             'requisition_id': order[20],
-            'rfq_due_date': order[21],
-            'source_approval_requests': order[22],
+            # 'rfq_due_date': order[21],
+            # 'source_approval_requests': order[22],
             'winner': order[23],
             'has_equipment': order[24]
         }
@@ -416,8 +416,8 @@ def purchase_order():
             partner_id = odoo.execute_kw(O_DB, O_UID, O_PWD, 'res.partner', 'search', [[['old_id', '=', order[6]], *archieved_condition]])
             vals.update({'partner_id': partner_id and partner_id[0] or False})
 
-            approval_id = odoo.execute_kw(O_DB, O_UID, O_PWD, 'approval.request', 'search', [[['old_id', '=', order[19]]]])
-            vals.update({'approval_id': approval_id and approval_id[0] or False})
+            # approval_id = odoo.execute_kw(O_DB, O_UID, O_PWD, 'approval.request', 'search', [[['old_id', '=', order[19]]]])
+            # vals.update({'approval_id': approval_id and approval_id[0] or False})
 
 
             odoo.execute_kw(O_DB, O_UID, O_PWD, 'purchase.order', 'create', [vals])
