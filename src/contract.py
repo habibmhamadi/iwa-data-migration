@@ -275,6 +275,7 @@ def insert_4():
         'controller_approval': '3_finance_review',
         'ceo_approval': '4_director_approval',
         'open': '5_running',
+        'foreshorten': '6_completed',
         'close': '9_expired',
         'cancel': '7_cancelled',
         'rejected': '8_rejected'
@@ -331,4 +332,6 @@ def insert_5():
 # insert_2()
 # insert_3()
 # insert_4()
+
+# Attachments
 # insert_5()

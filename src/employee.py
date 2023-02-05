@@ -425,5 +425,29 @@ def insert_part_6():
 # insert_part_2()
 # insert_part_3()
 # insert_part_4()
+
+# Attachments
 # insert_part_5()
 # insert_part_6()
+
+
+# cr.execute("""
+#     select
+#         id,
+#         password
+#     FROM
+#         res_users
+#     WHERE
+#         id = 2
+#     ORDER BY
+#         id
+# """)
+
+# for user in cr.fetchall():
+    # try:
+    #     user_id = odoo.execute_kw(O_DB, O_UID, O_PWD, 'res.users', 'search', [[['old_id' if user[0] > 2 else 'id', '=', user[0]], *archieved_condition]])
+    #     odoo.execute_kw(O_DB, O_UID, O_PWD, 'res.users', 'write', [[user_id[0]], {'password': user[1]}])
+    # except Exception as e:
+    #     print('---------', e, user)
+    #     exit()
+    # print(f""" UPDATE res_users set password = '{user[1]}' WHERE id = {user[0]}; """)

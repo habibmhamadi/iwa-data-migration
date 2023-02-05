@@ -42,7 +42,7 @@ def approval():
             'amount': app[7],
             # 'currency_id': app[8],
             # 'urgent_level': app[9],
-            # 'old_sequence': app[10],
+            'old_sequence': app[10],
             'reason': app[11],
             'request_status': app[12],
             'old_total': app[7]
@@ -487,8 +487,10 @@ def purchase_order_lines():
 # approval()
 # approval_lines()
 # approval_approvers()
+
 # purchase_requistion()
 # purchase_requistion_lines()
 # purchase_approvers()
+
 # purchase_order()
 # purchase_order_lines()
